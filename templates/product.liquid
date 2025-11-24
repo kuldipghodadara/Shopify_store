@@ -1,0 +1,386 @@
+{%- comment -%}
+  templates/product.liquid
+  Drop this into your theme's templates/ or use as a starting point for a product template.
+{%- endcomment -%}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ product.title }} — {{ shop.name x}}</title>
+
+  <style>
+    /* Reset & base */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f6f7f9; padding:24px; color:#222; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Container */
+    .product-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      gap: 32px;
+      padding: 28px;
+    }
+
+    /* Left column (images) */
+    .product-gallery {
+      flex: 1 1 50%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .product-main-image {
+      width: 100%;
+      min-height: 380px;
+      background: #f2f4f7;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: 8px;
+      overflow:hidden;
+    }
+
+    .product-main-image img {
+      width: 100%;
+      height: auto;
+      max-height: 640px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .product-thumbs {
+      display:flex;
+      gap:10px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .product-thumb {
+      width:64px;
+      height:64px;
+      border-radius:6px;
+      overflow:hidden;
+      background:#fff;
+      border:1px solid #e6e9ee;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .product-thumb img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .product-thumb.active {
+      outline: 2px solid #2c6ecb;
+    }
+
+    /* Right column (details) */
+    .product-info {
+      flex: 1 1 45%;
+      display:flex;
+      flex-direction:column;
+      justify-content: center;
+      gap: 18px;
+      padding: 8px 6px;
+    }
+
+    .product-title {
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1.1;
+      color:#111;
+    }
+
+    .product-vendor {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .product-price {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .product-price .compare {
+      font-weight: 400;
+      text-decoration: line-through;
+      color: #888;
+      margin-left: 10px;
+      font-size: 16px;
+    }
+
+    .product-meta {
+      color:#444;
+      font-size:14px;
+      margin-top: 6px;
+    }
+
+    .product-form {
+      margin-top: 12px;
+      display:flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    select, input[type="number"] {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d7dbe0;
+      font-size: 14px;
+      appearance: none;
+      width: 100%;
+      max-width: 320px;
+      background: #fff;
+    }
+
+    .quantity-row {
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    .quantity-row input[type="number"] {
+      width: 100px;
+    }
+
+    .add-to-cart {
+      background: #2c6ecb;
+      color: #fff;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 220px;
+    }
+
+    .add-to-cart[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .product-description {
+      margin-top: 12px;
+      color:#444;
+      line-height: 1.5;
+      max-width: 640px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .product-page { flex-direction: column; padding: 18px; }
+      .product-main-image { min-height: 320px; }
+      .product-info { padding-top: 8px; }
+      .product-thumbs { gap:8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="product-page">
+
+    <!-- LEFT: Gallery -->
+    <div class="product-gallery">
+      <div class="product-main-image" id="mainImageWrap">
+        {%- if product.featured_image -%}
+          <img id="mainImage" src="{{ product.featured_image | img_url: '900x' }}" alt="{{ product.featured_image.alt | escape }}">
+        {%- elsif product.images.size > 0 -%}
+          <img id="mainImage" src="{{ product.images.first | img_url: '900x' }}" alt="{{ product.images.first.alt | escape }}">
+        {%- else -%}
+          <img id="mainImage" src="https://via.placeholder.com/900x900?text=No+Image" alt="No image available">
+        {%- endif -%}
+      </div>
+
+      <div class="product-thumbs" id="thumbs">
+        {%- assign all_images = product.images -%}
+        {%- if all_images.size > 0 -%}
+          {%- for image in all_images -%}
+            <button type="button" class="product-thumb{% if forloop.first %} active{% endif %}" data-image="{{ image | img_url: '900x' }}" aria-label="View image {{ forloop.index }}">
+              <img src="{{ image | img_url: '200x200' }}" alt="{{ image.alt | escape }}">
+            </button>
+          {%- endfor -%}
+        {%- else -%}
+          <!-- single placeholder thumb -->
+          <div class="product-thumb active">
+            <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image available">
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <!-- RIGHT: Product details & form -->
+    <div class="product-info">
+      <div>
+        <h1 class="product-title">{{ product.title }}</h1>
+        {%- if product.vendor -%}
+          <div class="product-vendor">By {{ product.vendor }}</div>
+        {%- endif -%}
+      </div>
+
+      <!-- Price -->
+      <div class="product-price" id="priceArea">
+        {%- assign first_variant = product.selected_or_first_available_variant -%}
+        <span class="current-price">{{ first_variant.price | money }}</span>
+        {%- if first_variant.compare_at_price and first_variant.compare_at_price > first_variant.price -%}
+          <span class="compare">{{ first_variant.compare_at_price | money }}</span>
+        {%- endif -%}
+      </div>
+
+      <div class="product-meta">
+        SKU: <strong>{{ first_variant.sku | default: "—" }}</strong>
+        &nbsp; • &nbsp;
+        Availability: <strong>{% if first_variant.available %}In stock{% else %}Sold out{% endif %}</strong>
+      </div>
+
+      <!-- Add-to-cart form - uses Shopify form tag -->
+      {% form 'product', product %}
+        <div class="product-form">
+
+          <!-- Variant selector (if multiple) -->
+          {%- if product.variants.size > 1 -%}
+            <label for="ProductSelect">Options</label>
+            <select id="ProductSelect" name="id" aria-label="Product options">
+              {%- for variant in product.variants -%}
+                <option
+                  value="{{ variant.id }}"
+                  data-price="{{ variant.price | json }}"
+                  data-compare="{{ variant.compare_at_price | json }}"
+                  data-sku="{{ variant.sku | escape }}"
+                  {% if variant == product.selected_or_first_available_variant %} selected{% endif %}>
+                  {%- if variant.title == 'Default Title' -%}
+                    {%- if product.options.size > 1 -%}
+                      {{ variant.title }}
+                    {%- else -%}
+                      {{ product.title }} — {{ variant.title }}
+                    {%- endif -%}
+                  {%- else -%}
+                    {{ variant.title }}
+                  {%- endif -%}
+                </option>
+              {%- endfor -%}
+            </select>
+          {%- else -%}
+            <!-- single variant: include hidden input so form submits the variant id -->
+            <input type="hidden" name="id" value="{{ first_variant.id }}">
+          {%- endif -%}
+
+          <!-- Quantity -->
+          <div class="quantity-row" aria-hidden="false">
+            <label for="quantity">Quantity</label>
+            <input id="quantity" name="quantity" type="number" value="1" min="1" aria-label="Quantity">
+          </div>
+
+          <!-- Add to cart button -->
+          <div>
+            <button type="submit" class="add-to-cart" id="AddToCartButton" {% unless first_variant.available %}disabled{% endunless %}>
+              {% if first_variant.available %}Add to cart{% else %}Sold out{% endif %}
+            </button>
+          </div>
+
+        </div>
+      {% endform %}
+
+      <!-- Short description -->
+      <div class="product-description">
+        {%- if product.description != blank -%}
+          {{ product.description | strip_html | truncate: 400 }}
+        {%- else -%}
+          <p>Placeholder product description. Add details, specifications and features here to help customers decide.</p>
+        {%- endif -%}
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- Thumbnail switching ---
+    (function(){
+      const mainImage = document.getElementById('mainImage');
+      const thumbs = document.getElementById('thumbs');
+      if (thumbs) {
+        thumbs.addEventListener('click', (e) => {
+          const btn = e.target.closest('.product-thumb');
+          if (!btn) return;
+          // update main image
+          const imageSrc = btn.getAttribute('data-image') || btn.querySelector('img')?.src;
+          if (imageSrc && mainImage) {
+            mainImage.setAttribute('src', imageSrc);
+          }
+          // toggle active
+          thumbs.querySelectorAll('.product-thumb').forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      }
+    })();
+
+    // --- Variant change: update price, SKU, availability and hidden input ---
+    (function(){
+      const select = document.getElementById('ProductSelect');
+      const priceArea = document.getElementById('priceArea');
+      const addBtn = document.getElementById('AddToCartButton');
+      const hiddenInput = document.querySelector('input[name="id"][type="hidden"]') || document.querySelector('select[name="id"]');
+
+      function updateFromOption(optionElement){
+        if (!optionElement) return;
+        const price = optionElement.dataset.price ? parseFloat(optionElement.dataset.price) : null;
+        const compare = optionElement.dataset.compare ? parseFloat(optionElement.dataset.compare) : null;
+        const sku = optionElement.dataset.sku || '';
+
+        // Update price text
+        if (priceArea) {
+          let html = '';
+          if (price !== null && !isNaN(price)) {
+            // Format price using shop.money_format isn't available in JS; show number with 2 decimals and rely on Liquid initial rendering as fallback.
+            // We will show the same format as initial render when possible by replacing textContent.
+            // Safer: use the optionElement.text to update only numeric part — but simpler: show using toFixed(2)
+            html += '<span class="current-price">' + price.toFixed(2) + '</span>';
+            if (compare && compare > price) {
+              html += '<span class="compare">' + compare.toFixed(2) + '</span>';
+            }
+          }
+          priceArea.innerHTML = html || priceArea.innerHTML;
+        }
+
+        // Update Add to cart state (we can't know availability from dataset here, use presence)
+        if (addBtn) {
+          // If the optionElement exists, variant might be available; but Shopify does not expose availability through data attributes above.
+          // We'll assume available unless the optionElement has data-available="false"
+          const available = optionElement.dataset.available !== 'false';
+          addBtn.disabled = !available;
+          addBtn.textContent = available ? 'Add to cart' : 'Sold out';
+        }
+
+        // Update hidden input / select to submit right variant id - select already does that automatically;
+        // if there's a hidden input we need to update it instead (single variant case handled server-side).
+        // Nothing needed here because Shopify form handles selects.
+      }
+
+      if (select) {
+        select.addEventListener('change', function(e){
+          const opt = this.options[this.selectedIndex];
+          updateFromOption(opt);
+        });
+      }
+      // Initialize values on page load from the selected option
+      if (select) {
+        updateFromOption(select.options[select.selectedIndex]);
+      }
+    })();
+  </script>
+</body>
+</html>
